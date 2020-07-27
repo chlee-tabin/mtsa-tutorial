@@ -2,16 +2,17 @@
 title: "MTSA tutorial"
 author: "ChangHee Lee"
 date: "12/13/2017"
+updated: "7/27/2020" by Dongwon Lee
 output: html_document
 ---
 
 # Background
 
-I have tried out MTSA (MPRA Tag Sequence Analysis) Tool, which I hope the author will make it available in pre-print pretty soon (early next year?). The runnable code can be found in [github page](https://github.com/Dongwon-Lee/mtsa). As of current, the repository does not contain a step-by-step explanation how to run the code but a straightforward bundle of script where you could modify on. To further ease potential tryouts, I have assembled this document for whoever might be interested in running it (I personally have runned it and found some issues with my dataset, hope you might have better luck).
+I have tried out MTSA (MPRA Tag Sequence Analysis) Tool. The runnable code can be found in [github page](https://github.com/Dongwon-Lee/mtsa). As of current, the repository does not contain a step-by-step explanation how to run the code but a straightforward bundle of script where you could modify on. To further ease potential tryouts, I have assembled this document for whoever might be interested in running it (I personally have runned it and found some issues with my dataset, hope you might have better luck).
 
 ## Utility of MTSA
 
-Before the step-by-step, to illustrate the utility of this algorithm by two figures I received from the author:
+Before the step-by-step, to illustrate the utility of this algorithm by two figures:
 
 ![Figure 1. Correlation of expression score between two randomly picked barcodes of a given CRE](figure1.png)
 
@@ -23,7 +24,7 @@ This figure shows the "corrected" expression score accounting for the effect of 
 
 ## Brief description of the algorithm
 
-My understanding of the algorithm is that by having the sequence information of the multiple barcodes representing a specific CRE, one can build a model that tries to explain the variation of RNA/DNA score within a CRE by a combination of the presence/absence of k-mer sequences found in the barcode + the surrounding vector sequences.
+My understanding of the algorithm is that by having the sequence information of the multiple barcodes representing a specific CRE, one can build a model that tries to explain the variation of RNA/DNA score within a CRE by a combination of the presence/absence of gapped k-mer sequences found in the barcode + the surrounding vector sequences.
 
 In a perfect world of MPRA, barcode sequence would have no effect and we would get a very similar RNA/DNA score for every barcode sequence given an identical CRE. But that is not what we observe, and it tries to computationally "fix" this.
 
@@ -42,21 +43,25 @@ It only requires
 
 It is recommended that 
 
-* per barcode (not per CRE) the read count is around 1,000 reads
+* per barcode (not per CRE) the read count is around 100 ~ 1,000 reads, depending on the data sets.  Some datasets may require more reads to reliably estimate the barcode effects. 
 
 
 # Step-by-step
 
 ## Run environment
 
-The code runs in standard anaconda environment. For installation, see [here](https://conda.io/docs/user-guide/install/download.html).
+The code runs in standard anaconda environment (Python 2 + standard gcc compiler). For installation, see [here](https://conda.io/docs/user-guide/install/download.html).
 
 
 ## Sample run
 
-The github repository contains "public_data" directory which practically run example datasets and would be the go-to point to try out your own dataset.
+The github repository contains "public_data" directory which practically run example datasets and would be the go-to point to try out your own dataset.  `Melnikov2012` chosen because it is relatively small dataset that runs quick.
 
-It grabs publicly available MPRA dataset (which has raw barcode sequences and individual reads provided) `0_get_public_data.sh` and then formats the data into the input format for the MTSA algorithm (`1_process_public_data_all.sh`), then gives a simple plotting function to generate graphs to eyeball a few parameters to try (`2_plot_plasmid_vs_norm_expr_all.sh`), and then builds the training data (`3_mtsa_build_tranining_data_all.sh`) and then actually runs the data according to the training dataset to correct the barcode effect for one particular dataset (`4_mtsa_training_mel12.sh`), chosen because it is relatively small dataset that runs quick.
+ * `0_get_raw_data.sh` grabs publicly available MPRA dataset (which has raw barcode sequences and individual reads provided)
+ * `1_process_raw_data.sh` formats the data into the input format for the MTSA algorithm, 
+ * `2_plot_plasmid_vs_norm_expr.sh` gives a simple plotting function to generate graphs to eyeball a few parameters to try
+ * `3_mtsa_build_training_data.sh` builds the training data 
+ * `4_mtsa_training.sh` actually runs the data according to the training dataset to correct the barcode effect for one particular dataset
 
 For me, it was a good practice to run these scripts to get a feel how the program runs.
 
