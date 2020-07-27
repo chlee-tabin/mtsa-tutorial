@@ -67,7 +67,7 @@ For me, it was a good practice to run these scripts to get a feel how the progra
 
 ## You need just three inputs
 
-For my own dataset, it might be more comfortable to use my own code up to the step 1 (`1_process_public_data_all.sh`).
+For my own dataset, it might be more comfortable to use my own code up to the step 1 (`1_process_raw_data.sh`).
 
 Only 3 formatted inputs are necessary:
 
@@ -104,7 +104,7 @@ In this step, the user practically decides which barcodes would be used for trai
 
 The idea is that the barcode should be well represented in the original MPRA plasmid library to reliably gauge the expression of a given CRE. If there are too few plasmids in the first place, random chances (non sequence-specific) could take over the most variation of expression than any sequence-specific effect.
 
-This corresponds to `2_plot_plasmid_vs_norm_expr_all.sh`. It just practically generates a summary figure using Rscript, so could be done locally utilizing the code in  `scripts/plot_dna_vs_nexpr.R`.
+This corresponds to `2_plot_plasmid_vs_norm_expr.sh`. It just practically generates a summary figure using Rscript, so could be done locally utilizing the code in  `scripts/plot_dna_vs_nexpr.R`.
 
 ```{r, eval=FALSE}
 # Usage
@@ -138,7 +138,7 @@ These two parameters will be supplied for the subsequent step.
 
 ## Let's build the dataset for the model
 
-This corresponds to the `3_mtsa_build_training_data_all.sh` script, and the code usage is this:
+This corresponds to the `3_mtsa_build_training_data.sh` script, and the code usage is this:
 
 ```{r, eval=FALSE}
 # Usage example
@@ -167,7 +167,7 @@ Running this will simply generate the output file given by -n, which essentially
 
 ## Let's make the model and see the corrected expression values!
 
-This corresponds to the `4_mtsa_training_mel12.sh` script in the public_data directory.
+This corresponds to the `4_mtsa_training.sh` script in the public_data directory.
 
 ```{r, eval=FALSE}
 DATADIR=Melnikov2012_processed
