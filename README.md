@@ -2,7 +2,7 @@
 title: "MTSA tutorial"
 author: "ChangHee Lee"
 date: "12/13/2017"
-updated: "7/27/2020" by Dongwon Lee
+last updated: "7/27/2020"
 output: html_document
 ---
 
