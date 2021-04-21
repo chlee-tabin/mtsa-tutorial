@@ -100,6 +100,27 @@ A:HNF4A-ChMod_chr10:11917871-11917984_[chr10:11917842-11918013]	1170	0	1667	2775
 You can use your own code (i.e. tidyverse in R) to generate the formatted matrices.  This would be very straightforward to generate for a bioinformatician.
 (Of course, for each file, the **order** of sequence and read counts should match.)
 
+## Alternatively, you need just one input file
+
+Some recent MPRA designs (Tewhey et al.; 2016, Klein et al., 2020) use degenerate bases to generate random barcodes.  This technique does not give us an equal number of barcodes per CRE.  To handle this new type of MPRA, we also provide addtional commands 'build2/normalize2' that take only one formatted input file.
+
+ * mpra_input.txt: A file that contains CRE names, barcode sequences, DNA and RNA counts in tab-delimited format
+
+The first few lines of mpra_input.txt looks like this:
+
+```
+$ head tew16_mtsa_input.tot50.txt
+chr10:110926269:I_A	CGCTACAACTGTGTATCAAT	50	398
+chr10:110926269:I_A	TGCACTGTGGACCGGTTAAC	61	249
+chr10:110926269:I_A	CGGTTCATTTTCCTACTGTA	53	67
+chr10:110926269:I_A	TTTTTGACCTACGATTCGAG	97	227
+chr10:110926269:I_B	GTGTCGTTCGATTATCCTTA	51	201
+chr10:110926269:I_B	GACAAAGACCCTGGGGATAT	59	203
+chr10:110926269:I_B	GTTGGTTAAATCCCCGACGG	61	210
+chr10:111537100:I_A	TAACGGGCATTTGCGTCCTA	62	371
+chr10:111537100:I_A	TGATCTTCCCCTGTACGTAT	75	359
+chr10:111537100:I_A	ACATAACAAATCTCTCATCC	62	289
+```
 
 ## Deciding the cut-off of DNA counts (and assessing the quality of the dataset)
 
@@ -167,12 +188,14 @@ Running this will simply generate the output file given by -n, which essentially
 -rw-rw-r-- 1 cl266 cl266 466609 Nov  9 21:11 mtsa_mel12.m1000.t5.e5.tag_rexpr.txt
 ```
 
+Note: `build2` command also does the same, except that it takes only one input file as described above.
 
 ## Let's make a model!
 
 This corresponds to the `4_mtsa_training.sh` script in the public_data directory.
 
 ```{r, eval=FALSE}
+# Usage example
 DATADIR=Melnikov2012_processed
 ../bin/mtsa.py train -n ${DATADIR}/mtsa_mel12.m1000.t5.e5
 ```
@@ -180,3 +203,31 @@ DATADIR=Melnikov2012_processed
 You just supply the same prefix created from the previous step.
 
 It will generate a series of output files, but the last line of the run log will give you r^2 scores, how much the model would increase the fit from the original data.
+
+Details about the outputs are below:
+
+* `{PREFIX}.cv.txt`: 5-fold Cross-validation result from the first training, which will be used to correct the input
+* `{PREFIX}.tag_rexpr_adj.txt`: Adjusted expression based on the initial training with 5-fold cross-validation
+* `{PREFIX}.e0.adj.0.cv.txt`: 5-fold Cross-validation result from the second training. r^2 score is calculated using this.
+* `{PREFIX}.adj.model.txt`: MTSA model trained on all barcodes
+* `{PREFIX}.excluded_tags.score.txt`: Scores of the excluded tags made by `{PREFIX}.adj.model.txt`
+* `{PREFIX}.sequence_factor.txt`: Combination of the 5-fold CV result and scores of the excluded tags, which will be used by `normalization`
+
+## Correcting RNA counts using the trained model
+
+There is no bash script that corresponds to this, but it is very similar to `build` command.
+
+```{r, eval=FALSE}
+# Usage example
+DATADIR=Melnikov2012_processed
+EXPNAME=${DATADIR}/mtsa_mel12.m1000.t5.e5
+${MTSA} normalize -n ${EXPNAME} \
+    -l CTAGA -r AGATC \
+    ${DATADIR}/mpra_mrna_counts.txt \
+    processed/mpra_tags.txt \
+    ${DATADIR}/mpra_mrna_counts.norm.txt
+```
+
+It will generate the normalized mRNA counts using the trained model specified by `-n EXPNAME`.  You just need to make sure that you use the same surrounding sequences.  Now, use these MTSA corrected mRNA counts to perform any downstream analyses!
+
+Note: `normalize2` command also does the same, except that it takes only one input file as described above.
