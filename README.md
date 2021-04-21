@@ -1,14 +1,14 @@
 ---
 title: "MTSA tutorial"
-author: "ChangHee Lee"
+author: "ChangHee Lee, Dongown Lee"
 date: "12/13/2017"
-last updated: "7/27/2020"
+last updated: "4/21/2021"
 output: html_document
 ---
 
 # Background
 
-I have tried out MTSA (MPRA Tag Sequence Analysis) Tool. The runnable code can be found in [github page](https://github.com/Dongwon-Lee/mtsa). As of current, the repository does not contain a step-by-step explanation how to run the code but a straightforward bundle of script where you could modify on. To further ease potential tryouts, I have assembled this document for whoever might be interested in running it (I personally have runned it and found some issues with my dataset, hope you might have better luck).
+Here, we provide a brief tutorial for our MTSA (MPRA Tag Sequence Analysis) Tool. The runnable code can be found in [github page](https://github.com/Dongwon-Lee/mtsa). The repository does not contain a step-by-step explanation how to run the code but a straightforward bundle of script where you could modify on. To further ease potential tryouts, We have assembled this document for whoever might be interested in running it.  Please contact Dongwon Lee, if you run into any issues.
 
 ## Utility of MTSA
 
@@ -16,7 +16,7 @@ Before the step-by-step, to illustrate the utility of this algorithm by two figu
 
 ![Figure 1. Correlation of expression score between two randomly picked barcodes of a given CRE](figure1.png)
 
-This figure just shows the expression score (simply, RNA/DNA) from two randomly picked barcode expression data for each CRE (cis-regulatory element). As one frequently observes, there can be quite a bit of variation on that score. I used to just combine all the barcodes for a CRE hoping that the multiple barcode effects will average out.
+This figure just shows the expression score (simply, RNA/DNA) from two randomly picked barcode expression data for each CRE (cis-regulatory element). As one frequently observes, there can be quite a bit of variation on that score. Typically, all the barcodes for a CRE are combined hoping that the multiple barcode effects will average out.
 
 ![Figure 2. Accounting for sequence-specific expression modification, correlation is improved](figure2.png)
 
@@ -24,13 +24,13 @@ This figure shows the "corrected" expression score accounting for the effect of 
 
 ## Brief description of the algorithm
 
-My understanding of the algorithm is that by having the sequence information of the multiple barcodes representing a specific CRE, one can build a model that tries to explain the variation of RNA/DNA score within a CRE by a combination of the presence/absence of gapped k-mer sequences found in the barcode + the surrounding vector sequences.
+Using the sequence information of the multiple barcodes representing a specific CRE, one can build a model that tries to explain the variation of RNA/DNA score within a CRE by a combination of the presence/absence of gapped k-mer sequences found in the barcode + the surrounding vector sequences.
 
-In a perfect world of MPRA, barcode sequence would have no effect and we would get a very similar RNA/DNA score for every barcode sequence given an identical CRE. But that is not what we observe, and it tries to computationally "fix" this.
+In a perfect world of MPRA, barcode sequence would have no effect and we would get a very similar RNA/DNA score for every barcode sequence given an identical CRE. But that is not what we observe, and our model tries to "fix" it computationally.
 
-In terms of biologist perspective, it identifies potential sequences at the 3'UTR of a expression vector that could be bound by say miRNAs or other factors that modulate the transcription and/or stability of the mRNA.
+In terms of biologist perspective, it identifies potential sequences at the 3'UTR of a expression vector that could be bound by miRNAs, RBP, or other factors that modulate the transcription and/or stability of the mRNA.
 
-The more number of barcode sequences you have for a particular CRE, it could infer more information of common sequence features that either consistently downregulate or upregulate a RNA/DNA value in a given set. Typically, more than 7 distinct barcode sequences might yield improvement.
+The more number of barcode sequences you have for a particular CRE, it could infer more information of common sequence features that either consistently downregulate or upregulate a RNA/DNA value in a given set. Typically, more than 5 distinct barcode sequences might yield improvement.
 
 ## Pre-requisites
 
@@ -50,7 +50,7 @@ It is recommended that
 
 ## Run environment
 
-The code runs in standard anaconda environment (Python 2 + standard gcc compiler). For installation, see [here](https://conda.io/docs/user-guide/install/download.html).
+The code runs in standard anaconda environment (Python 2 or Python 3 + R + standard gcc compiler). For installation, see [here](https://conda.io/docs/user-guide/install/download.html).
 
 
 ## Sample run
@@ -61,27 +61,31 @@ The github repository contains "public_data" directory which practically run exa
  * `1_process_raw_data.sh` formats the data into the input format for the MTSA algorithm, 
  * `2_plot_plasmid_vs_norm_expr.sh` gives a simple plotting function to generate graphs to eyeball a few parameters to try
  * `3_mtsa_build_training_data.sh` builds the training data 
- * `4_mtsa_training.sh` actually runs the data according to the training dataset to correct the barcode effect for one particular dataset
+ * `4_mtsa_training.sh` actually runs the data according to the training dataset to build a MTSA model
+ * `4_mtsa_training_revcomp.sh` also trains a MTSA model, but treating reverse complement gapped k-mers as distinct features with `-R` option
+ * `5_tag_expr_cmp.sh` performs the analysis of barcode expression comparison before and after the MTSA correction as shown above
+ * `6_calculate_8mer_scores.sh` calculates 8-mer weights using the traing model
+ * `7_plot_results.sh` makes plots that compare observed and predicted expression
+ * `8_reps_cmp.sh` compares barcode expression between replicates before and after MTSA correction
+ * `9_mtsa_training_noflanking.sh` trains a MTSA model without flanking sequences
 
-For me, it was a good practice to run these scripts to get a feel how the program runs.
+Running these script is a good practice to get a feel how MTSA works.
 
 ## You need just three inputs
 
-For my own dataset, it might be more comfortable to use my own code up to the step 1 (`1_process_raw_data.sh`).
+For your own dataset, it might be more comfortable to use your own code up to the step 1 (`1_process_raw_data.sh`).
 
-Only 3 formatted inputs are necessary:
+Only 3 formatted inputs are necessary if you have MPRA data with predefined barcodes:
 
-* mpra_tags.txt: A file that contains the CRE names and barcode sequences  in tab-delimited format
-* mpra_dna_counts.txt: A file that contains the CRE names and read counts of plasmid DNA for each barcodes in tab-delimited format
-* mpra_mrna_counts.txt: A file that contains the CRE names and read counts of RNA (cDNA) for each barcodes in tab-delimited format
-
+* mpra_tags.txt: A file that contains the CRE names and barcode sequences in tab-delimited (tsv) format
+* mpra_dna_counts.txt: A file that contains the CRE names and read counts of plasmid DNA for each barcodes in tsv format
+* mpra_mrna_counts.txt: A file that contains the CRE names and read counts of RNA (cDNA) for each barcodes in tsv format
 
 Just the first line of mpra_tags.txt looks like this:
 ```{r, eval=FALSE}
 cl266@compute-a-16-82:~/mtsa/public_data/Inoue2017_processed$ head mpra_tags.txt -n 1
 A:HNF4A-ChMod_chr10:11917871-11917984_[chr10:11917842-11918013]	CCTTATTCGCAACGT	CCTAGCATGAGCAAG	CGCTTCCTTATGCCT	TTAGAAGGTATCCAA	CCGCTTAGAACCAGT	CAGCTCAACTATTCC	TTAACGTTAATCTCG	ACGGCGGTCGCGTAC	GCAAGCCTCAAGTAC	TGCCTGATTGCTAAG	CCGCTTACGAACCTT	AGGTATTACGACTCT	TAACTCGCCTTACCG	CCTTACTGAACTTGG	TCTTGCATATAAGAT	CCGGACGATAAGCGC	CTAAGTTGGCTACGA	GTAGGAGCATCTATT	CCTCGCGATATATTC	GATAACCGCTGCTGA	GAGACCGTCTACTCC	TTCGCTCAATATAGC	AGCGCTTACGCTAGC	TTGCTTCAATTCAAC	TACCGGAACGTCTCA	ACCGGTTCGCGCTGG	TACCGAACGTACTCT	AGGTATCAGGTTACG	TAGTACGTCCGTCTT	GATTGCGTCCGATAA	GTTAAGGTTCCGTCC	GCTCCGGATGCAGCT	CAACTTCCGTCTTAT	TGGATGAAGTCGAGG	CGCTTCGAGGCCTCA	TTACTGAAGTAGTCG	TTAGACCTCAGGCCA	AGGCTGCAAGTCAGG	CCGCTCCAGTTACCG	CAGCTTCTTGAATGC	TGCAATAGTAGTAGG	ATGATATGATCATGA	TAAGCTTACGTCAGG	TCCGCTCGCCGTTAA	GCTCCGGACTTCGCC	GAACCTTCGCCATCG	CATCGTCCTACGTCT	CTAGCGTTCTCTAAG	CGTCCTTGCCTTGAG	ATATGCGCCTATGAT	TATGGACGGCTTACG	CAGCCTAATCTAGGT	ATGGAGTTAGACGGC	CTTGGATCCTCGGCA	CGCGAGTTAATTCTG	ATTCCGGCGTACTCT	TCGCCAGATTCCGGA	TGACCTATCTCGGTT	TTGCTCCATCGTTAG	CGATCTAACTCCGGA	CTTATGACGCCTGGT	CCAGTCGAGGTCTCA	GAGTTCAACTAGGCT	TAATCGTCTTCCGAC	TCCGCAAGTCTAGGT	AAGTCTGGATCAGCC	TCCTAGGAGCGAGAC	CTAATTACCGAGATT	GATAAGTTCTGAGAC	TCCTATTGAGTCTCA	GAGACGGCGTCGTAC	AATAGGCTACGTATA	CCTCGTACCGAGGCT	CATGACGTACGCCAT	GTATATGAAGTAAGC	CCAGTTAAGCATGAT	CTTATCAATTGGTAT	TCGGTCTTATGAGTT	CGTAATCATTGCTCC	CATGAACCTTCAGCT	TCGGTATATGAGTCG	GGCGTAACCTTACGA	GCTACTGGATAAGTC	TTCATTCTCAGAGAC	TCAGGTCGGTAACCT	TATCTTCGTTGATAA	AAGTCAATGCCAGAG	GGTCGTTATCGGCGT	TCCTAGACGCCGTAA	CTAGCATGATGACGC	ACTTCTGGATTCAAT	CGCAGCGCGAGAACG	AACCTCGGCAGAATC	GTAGTTCTATTCGGA	AGGTACGCAGTAAGC	TATCTCCGACTGATG	GGTCGCGATAAGCGC	CAGCTAGCGCAATAG	AGCATCATCGCTAAG	TTCTGGATAACTAGC
 ```
-
 
 The first line of mpra_dna_counts.txt looks like this:
 ```{r, eval=FALSE}
@@ -93,14 +97,13 @@ The first line of mpra_mrna_counts.txt looks like this:
 A:HNF4A-ChMod_chr10:11917871-11917984_[chr10:11917842-11918013]	1170	0	1667	2775	1357	292	1051	475	283	1013	653	467	377	0	469	2180	1211	1168	433	1737	847	0	0	655	5782	0	446	811	2307	180	3102	235	6741	461	1042	91	330	986	106	3065	0	383	0	1204	386	423	4066	1032	646	0	702	3343	936	462	963	950	720	0	0	840	14	3556	0	1981	1090	1598	0	728	187	2717	0	780	1274	497	0	0	4609	2824	204	1626	801	0	414	235	531	1602	0	611	443	618	418	0	888	698	598	389	633	251	1421	959
 ```
 
+You can use your own code (i.e. tidyverse in R) to generate the formatted matrices.  This would be very straightforward to generate for a bioinformatician.
+(Of course, for each file, the **order** of sequence and read counts should match.)
 
-I have used the tidyverse code to generate the formatted matrices (which I can provide to you if you are interested), but I think for a bioinformatician this would be very straightforward to generate.
-
-(Of course, for each files, the **order** of sequence and read counts should match.)
 
 ## Deciding the cut-off of DNA counts (and assessing the quality of the dataset)
 
-In this step, the user practically decides which barcodes would be used for training the model. 
+In this step, the user practically decides which barcodes would be used for training a model. 
 
 The idea is that the barcode should be well represented in the original MPRA plasmid library to reliably gauge the expression of a given CRE. If there are too few plasmids in the first place, random chances (non sequence-specific) could take over the most variation of expression than any sequence-specific effect.
 
@@ -128,9 +131,9 @@ The last one, the important one is enumerating how many barcodes (here "tags") h
 
 So at the end of this step by eye balling, you decide:
 
-* the minimum DNA read count threshold for a barcode to be eligible for training
+* the minimum DNA read count threshold for a barcode to be eligible for training (-m option for build/build2 command)
     - As described above, with too small representation in the original plasmid library, sequence non-specific effect would sway over sequence specificity decreasing the efficacy of the training
-* the minimum number of barcodes for a given CRE to be eligible for training
+* the minimum number of barcodes for a given CRE to be eligible for training (-t option for build/build2 command)
     - Since the training is done **per CRE basis** you need at least some number of trainable barcode expression information to effectively train your model
 
 
@@ -147,7 +150,7 @@ INDIR=Melnikov2012_processed
     ${INDIR}/mpra_dna_counts.txt ${INDIR}/mpra_mrna_counts.txt ${INDIR}/mpra_tags.txt
 ```
 
-So each parameters will be explained:
+So each of the parameters will be explained:
 
 * -m : this is the minimum number of read counts of the DNA (see above subsection)
 * -t : this is the minimum number of barcodes for each CRE (see above subsection)
@@ -165,7 +168,7 @@ Running this will simply generate the output file given by -n, which essentially
 ```
 
 
-## Let's make the model and see the corrected expression values!
+## Let's make a model!
 
 This corresponds to the `4_mtsa_training.sh` script in the public_data directory.
 
